@@ -1,0 +1,5 @@
+mkdir -p /tmp/ltfs/tape
+mkltfs -e file -d /tmp/ltfs/tape
+mkdir -p /mnt/ltfs
+ltfs /mnt/ltfs -o tape_backend=file -o devname=/tmp/ltfs/tape
+dd if=/dev/urandom of=/mnt/ltfs/1 bs=1M count=16

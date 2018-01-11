@@ -1,0 +1,103 @@
+// Copyright 2017 Klaus Birkelund Jensen <birkelund@nbi.ku.dk>
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+// implied. See the License for the specific language governing
+// permissions and limitations under the License.
+//
+// Author: Klaus Birkelund Jensen <birkelund@nbi.ku.dk>
+
+syntax = "proto3";
+
+package proto;
+
+// An Index is a binary index with a rooted directory structure
+message Index {
+	// A pointer to the block of the previous entry
+	uint64 prev = 1;
+
+	uint64 block = 2;
+
+	// The root directory entry
+	Entry root = 3;
+}
+
+// A directory consists of a number fo entries.
+message Directory {
+	repeated Entry entries = 2;
+}
+
+// A file has a length a a number of extents.
+message File {
+	uint64   length = 1;
+	repeated Extent extents = 2;
+}
+
+// An entry has an id, metadata and contains either a File or a Directory.
+message Entry {
+	uint64 id = 1;
+	string name = 2;
+	bool   readonly = 3;
+	int64  create_time = 4;
+	int64  change_time = 5;
+	int64  modify_time = 6;
+	int64  access_time = 7;
+	int64  backup_time = 8;
+
+	enum Op { UNKNOWN = 0; ADD = 1; RM = 2; CH = 3; }
+	Op operation = 9;
+
+	oneof elem {
+		File      file = 10;
+		Directory dir = 11;
+	}
+}
+
+// Extent is what file consists of.
+message Extent {
+	// file id that this extent belongs to
+	uint64 id = 1;
+
+	// the partition this extent is recorded on
+	// (subject to the data placement policy)
+	uint32 partition = 2;
+
+	// the block where this extent begins
+	uint64 block = 3;
+
+	// length of the extent in bytes
+	uint64 length = 4;
+
+	// byte offset to first valid byte
+	uint64 boffset = 5;
+
+	// byte offset in the file where this extent
+	// begins
+	uint64 offset = 6;
+}
+
+// Log is either a incremental or differential journal entry.
+message Log {
+  // log entry class
+  enum Class { UNKNOWN = 0; INC = 1; DIFF = 2; }
+  Class class = 1;
+
+  // back pointer
+  uint64 prev = 2;
+
+	// log block where this log entry begins
+	uint64 block = 3;
+
+  // new entries (dirs and files) since the epoch.
+  repeated Entry entries = 4;
+
+  // new extents since the epoch.
+  repeated Extent extents = 5;
+}
